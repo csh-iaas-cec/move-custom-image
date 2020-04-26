@@ -16,6 +16,7 @@ class Worker:
 		self.source_compute_client = oci.core.ComputeClient(self.source_config)
 		self.source_composite_compute_client=oci.core.ComputeClientCompositeOperations(self.source_compute_client)
 		self.work_request_client = oci.work_requests.WorkRequestClient(self.source_config)
+		self.image_worker = dict()
 
 
 	def get_worker_request_from_image_id(self, image_id):
@@ -32,11 +33,12 @@ class Worker:
 		return self.get_worker_state(work_request_id).percent_complete
 
 	def get_percent_complete_from_image_id(self, image_id):
-		work_request_id = self.get_worker_request_from_image_id(image_id)
 		try:
-			return self.get_percent_complete(work_request_id)
-		except Exception as e:
-			print(e)
+			work_request_id = self.image_worker["image_id"]
+		except Exception:
+			work_request_id = self.get_worker_request_from_image_id(image_id)
+			self.image_worker["image_id"] = work_request_id
+		return self.get_percent_complete(work_request_id)
 			
 		
 

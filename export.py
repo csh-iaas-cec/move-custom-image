@@ -81,12 +81,14 @@ class Migrate:
 		
 		percents = list()
 		names = list()
-		for image_detail in self.images_details:
+		pos = list()
+		for count, image_detail in enumerate(self.images_details):
 			image = self.export_image(image_detail)
 			percents.append(PercentComplete("informatica-phoenix", image.id))
 			names.append(image.display_name)
+			pos.append(count)
 		time.sleep(15)
-		self.show_progress_and_import(percents, names)
+		self.show_progress_and_import(percents, names, pos)
 
 	def export_image(self, image):
 		export_image_details = oci.core.models.ExportImageViaObjectStorageTupleDetails(
@@ -154,17 +156,17 @@ class Migrate:
 		)
 		image_details = cid.create_image(create_image_details=image_details)
 
-	def prog(self,per, name):
-		with tqdm(total=100, desc = name) as progress_bar:
+	def prog(self,per, name, pos):
+		with tqdm(total=100, desc = name, position=pos) as progress_bar:
 			temp=0
 			for i in per:
 				progress_bar.update(i-temp)
 				temp=i
 		return name
 
-	def show_progress_and_import(self, percent, names):
+	def show_progress_and_import(self, percent, names, pos):
 		with concurrent.futures.ThreadPoolExecutor() as executor:
-			res = [executor.map(self.prog, percent, names)]
+			res = [executor.map(self.prog, percent, names, pos)]
 
 			for f in concurrent.futures.as_completed(res):
 				object_name = f.result()
