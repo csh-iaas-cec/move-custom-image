@@ -1,5 +1,3 @@
 *.txt
 test.py
-percent_complete.py
-worker_iterator.py
 *.pyc
