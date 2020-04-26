@@ -19,11 +19,3 @@ class PercentComplete:
         else:
             raise StopIteration
 
-if __name__ == "__main__":
-    image_id = "ocid1.image.oc1.phx.aaaaaaaav6ue3pjrakbmeonq62lrwethg6yuxirg5sov2zaq7p7cjjgshuwa"
-    per = PercentComplete("informatica-phoenix", image_id)
-    image_details = per.worker.get_images_details(image_id)
-    per.worker.export_image(image_details)
-    time.sleep(10)
-    for i in per:
-        print(i)

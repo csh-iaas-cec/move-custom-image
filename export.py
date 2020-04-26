@@ -7,7 +7,6 @@ from config import Config
 from oci.config import validate_config
 import oci
 import concurrent.futures
-import progress
 
 from percent_complete import PercentComplete
 
@@ -87,7 +86,7 @@ class Migrate:
 			percents.append(PercentComplete("informatica-phoenix", image.id))
 			names.append(image.display_name)
 		time.sleep(15)
-		progress.show_progress(percents, names)
+		self.show_progress_and_import(percents, names)
 
 	def export_image(self, image):
 		export_image_details = oci.core.models.ExportImageViaObjectStorageTupleDetails(
