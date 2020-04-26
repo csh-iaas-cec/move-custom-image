@@ -14,7 +14,11 @@ class PercentComplete:
 
     def __next__(self):
         if self.res < self.percent:
-            self.res = self.worker.get_percent_complete_from_image_id(self.image_id)
+            try:
+                self.res = self.worker.get_percent_complete_from_image_id(self.image_id)
+            except Exception:
+                self.res = self.percent
+            
             return int(self.res)
         else:
             raise StopIteration

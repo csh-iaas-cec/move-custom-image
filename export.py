@@ -82,10 +82,10 @@ class Migrate:
 		percents = list()
 		names = list()
 		pos = list()
-		for count, image_detail in enumerate(self.images_details):
+		for count, image_detail in enumerate(self.images_details, start=1):
 			image = self.export_image(image_detail)
-			percents.append(PercentComplete("informatica-phoenix", image.id))
-			names.append(image.display_name)
+			percents.append(PercentComplete("informatica-phoenix", image_detail.id))
+			names.append(image_detail.display_name)
 			pos.append(count)
 		time.sleep(15)
 		self.show_progress_and_import(percents, names, pos)
@@ -164,12 +164,13 @@ class Migrate:
 				temp=i
 		return name
 
-	def show_progress_and_import(self, percent, names, pos):
+	def show_progress_and_import(self, percent, names, position):
 		with concurrent.futures.ThreadPoolExecutor() as executor:
-			res = [executor.map(self.prog, percent, names, pos)]
+			res = [executor.submit(self.prog, p, n, pos) for p, n, pos in zip(percent, names, position)]
 
 			for f in concurrent.futures.as_completed(res):
 				object_name = f.result()
+				print(object_name)
 				self.import_image_all_regions(object_name)
 
 
