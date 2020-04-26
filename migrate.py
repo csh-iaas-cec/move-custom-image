@@ -83,12 +83,17 @@ class Migrate:
         names = list()
         pos = list()
         for count, image_detail in enumerate(self.images_details, start=1):
-            image = self.export_image(image_detail)
-            percents.append(
-                PercentComplete("informatica-phoenix", image.id, Migrate.COMPARTMENT)
-            )
-            names.append(image.display_name)
-            pos.append(count)
+            try:
+                image = self.export_image(image_detail)
+                percents.append(
+                    PercentComplete(self.source_config, image.id, Migrate.COMPARTMENT)
+                )
+                names.append(image.display_name)
+                pos.append(count)
+            except Exception as e:
+                print("Error in the image "+ image_detail.display_name)
+                print(e)
+            
         time.sleep(15)
         self.show_progress_and_import(percents, names, pos)
 
@@ -99,7 +104,12 @@ class Migrate:
             namespace_name=self.namespace,
             object_name=image.display_name,
         )
-        self.source_compute_client.export_image(image.id, export_image_details)
+        try:
+            self.source_compute_client.export_image(image.id, export_image_details)
+        except oci.exceptions.ServiceError as e:
+            print(e.code)
+            raise
+        
         return image
 
     def create_expiry_time(self):

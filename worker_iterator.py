@@ -3,23 +3,16 @@ import oci
 
 
 class Worker:
-    def __init__(self, profile, compartment):
+    def __init__(self, config, compartment):
         Worker.compartment = compartment
         self.percent = 100
-        self.config = Config(profile)
-        self.source_config = self.config.get_config()
-        self.source_region = self.source_config["region"]
-        self.source_compute_client = oci.core.ComputeClient(self.source_config)
-        self.source_composite_compute_client = oci.core.ComputeClientCompositeOperations(
-            self.source_compute_client
-        )
+        self.source_config = config
         self.work_request_client = oci.work_requests.WorkRequestClient(
             self.source_config
         )
         self.image_worker = dict()
 
     def get_worker_request_from_image_id(self, image_id):
-        # work_request_id = ""
         for work_request in self.list_work_request():
             worker_state = self.get_worker_state(work_request.id)
             if (

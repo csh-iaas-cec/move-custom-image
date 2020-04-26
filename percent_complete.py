@@ -3,10 +3,10 @@ import time
 
 
 class PercentComplete:
-    def __init__(self, profile, compartment, image_id, size_in_mbs=0):
+    def __init__(self, config, image_id, compartment, size_in_mbs=0):
         self.size_in_mbs = size_in_mbs
         self.percent = 100
-        self.worker = Worker(profile, compartment)
+        self.worker = Worker(config, compartment)
         self.image_id = image_id
         self.temp = 0
 
