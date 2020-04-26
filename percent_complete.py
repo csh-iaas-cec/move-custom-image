@@ -1,10 +1,12 @@
 from worker_iterator import Worker
 import time
+
+
 class PercentComplete:
-    def __init__(self, profile, image_id, size_in_mbs=0):
+    def __init__(self, profile, compartment, image_id, size_in_mbs=0):
         self.size_in_mbs = size_in_mbs
         self.percent = 100
-        self.worker = Worker(profile)
+        self.worker = Worker(profile, compartment)
         self.image_id = image_id
         self.temp = 0
 
@@ -18,8 +20,7 @@ class PercentComplete:
                 self.res = self.worker.get_percent_complete_from_image_id(self.image_id)
             except Exception:
                 self.res = self.percent
-            
+
             return int(self.res)
         else:
             raise StopIteration
-
