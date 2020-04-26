@@ -1,12 +1,15 @@
 import sys
 import datetime
 from datetime import timedelta
-
+import time
+from tqdm import tqdm
 from config import Config
 from oci.config import validate_config
 import oci
 import concurrent.futures
+import progress
 
+from percent_complete import PercentComplete
 
 REGIONS_SHORT_NAMES = {
 	"phx": "us-phoenix-1",
@@ -76,18 +79,15 @@ class Migrate:
 		return images_details
 
 	def migrate_images(self):
-		with concurrent.futures.ThreadPoolExecutor() as executor:
-			results = [
-				executor.submit(self.export_image, image_detail)
-				for image_detail in self.images_details
-			]
-
-			for f in concurrent.futures.as_completed(results):
-				object_name = f.result()
-				self.import_image_all_regions(object_name)
-
-			# with concurrent.futures.ThreadPoolExecutor() as executor_2:
-			# 	res = [executor_2.submit(self.import_image, f.result()) for f in concurrent.futures.as_completed(results)]
+		
+		percents = list()
+		names = list()
+		for image_detail in self.images_details:
+			image = self.export_image(image_detail)
+			percents.append(PercentComplete("informatica-phoenix", image.id))
+			names.append(image.display_name)
+		time.sleep(15)
+		progress.show_progress(percents, names)
 
 	def export_image(self, image):
 		export_image_details = oci.core.models.ExportImageViaObjectStorageTupleDetails(
@@ -96,8 +96,8 @@ class Migrate:
 			namespace_name=self.namespace,
 			object_name=image.display_name,
 		)
-		self.source_composite_compute_client.export_image_and_wait_for_state(image.id, export_image_details,  wait_for_states=["STATUS_SUCCEEDED"])
-		return image.display_name
+		self.source_compute_client.export_image(image.id, export_image_details)
+		return image
 
 	def create_expiry_time(self):
 		day_late = datetime.datetime.now() + timedelta(days=7)
@@ -154,6 +154,22 @@ class Migrate:
 			display_name=object_name,
 		)
 		image_details = cid.create_image(create_image_details=image_details)
+
+	def prog(self,per, name):
+		with tqdm(total=100, desc = name) as progress_bar:
+			temp=0
+			for i in per:
+				progress_bar.update(i-temp)
+				temp=i
+		return name
+
+	def show_progress_and_import(self, percent, names):
+		with concurrent.futures.ThreadPoolExecutor() as executor:
+			res = [executor.map(self.prog, percent, names)]
+
+			for f in concurrent.futures.as_completed(res):
+				object_name = f.result()
+				self.import_image_all_regions(object_name)
 
 
 if __name__ == "__main__":
