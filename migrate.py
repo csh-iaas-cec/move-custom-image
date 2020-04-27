@@ -1,3 +1,8 @@
+# Things to check
+# rename PROFILE variable
+# Rename compartment and bucket if required
+
+
 # python migrate.py images.txt iad lhr bom fra
 # Check the logs in migrate.log folder
 # Wait for the progress bar to finish to 100%
