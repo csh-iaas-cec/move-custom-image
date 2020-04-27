@@ -3,8 +3,15 @@
 # Rename compartment and bucket if required
 
 
+#############################
+# COMMAND TO RUN
+# pip install -r requirements.txt
 # python migrate.py images.txt iad lhr bom fra
-# Check the logs in migrate.log folder
+
+############################
+
+# CHECK LIST
+# Check the logs in migrate.log file
 # Wait for the progress bar to finish to 100%
 # Check whether the image has been imported in all regions once the code is executed
 
