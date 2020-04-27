@@ -207,4 +207,5 @@ if __name__ == "__main__":
         regions.append(region_destination)
     m = Migrate("informatica-phoenix", image_file, regions)
     print("\n\n\n\n\n\n")
+    print("Finished Migrating")
 
