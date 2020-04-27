@@ -206,3 +206,5 @@ if __name__ == "__main__":
         region_destination = REGIONS_SHORT_NAMES[region_short_input]
         regions.append(region_destination)
     m = Migrate("informatica-phoenix", image_file, regions)
+    print("\n\n\n\n\n\n")
+
