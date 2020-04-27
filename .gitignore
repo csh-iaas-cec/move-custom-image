@@ -3,3 +3,6 @@ test.py
 *.pyc
 *.json
 t.py
+.vscode
+__pycache__
+*.log

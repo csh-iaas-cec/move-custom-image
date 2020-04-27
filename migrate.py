@@ -1,4 +1,10 @@
+# python migrate.py images.txt iad lhr bom fra
+# Check the logs in migrate.log folder
+# Wait for the progress bar to finish to 100%
+# Check whether the image has been imported in all regions once the code is executed
+
 import sys
+import logging
 import datetime
 from datetime import timedelta
 import time
@@ -10,6 +16,8 @@ import concurrent.futures
 
 from percent_complete import PercentComplete
 
+logging.basicConfig(filename='migrate.log',level=logging.INFO, format='%(levelname)s:%(name)s %(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+logger = logging.getLogger("test")
 REGIONS_SHORT_NAMES = {
     "phx": "us-phoenix-1",
     "iad": "us-ashburn-1",
@@ -91,9 +99,9 @@ class Migrate:
                 names.append(image.display_name)
                 pos.append(count)
             except Exception as e:
-                print("Error in the image "+ image_detail.display_name)
-                print(e)
-            
+                logger.warning("Error in the image " + image_detail.display_name)
+                logger.warning(e)
+
         time.sleep(15)
         self.show_progress_and_import(percents, names, pos)
 
@@ -106,10 +114,11 @@ class Migrate:
         )
         try:
             self.source_compute_client.export_image(image.id, export_image_details)
+            logger.info(image.display_name+" started exporting")
         except oci.exceptions.ServiceError as e:
-            print(e.code)
+            logger.warning(e.code)
             raise
-        
+
         return image
 
     def create_expiry_time(self):
@@ -118,7 +127,7 @@ class Migrate:
 
     def create_PAR(self, object_name):
         par_name = object_name + "_par"
-        print("Creating par " + par_name)
+        logger.info("Creating par " + par_name)
         par_details = oci.object_storage.models.CreatePreauthenticatedRequestDetails(
             access_type=Migrate.ACCESS_TYPE,
             name=par_name,
@@ -154,11 +163,11 @@ class Migrate:
             self.regions
         )
         par = self.create_PAR(object_name)
+        logger.info("Importing Image " + object_name)
         for cid in destination_compute_clients:
             self.import_image(par, object_name, cid)
 
     def import_image(self, par, object_name, cid):
-        print("Importing Image " + object_name)
         source_details = oci.core.models.ImageSourceViaObjectStorageUriDetails(
             source_type="objectStorageUri", source_uri=par
         )
@@ -170,7 +179,7 @@ class Migrate:
         image_details = cid.create_image(create_image_details=image_details)
 
     def prog(self, per, name, pos):
-        with tqdm(total=100, desc=name, position=pos) as progress_bar:
+        with tqdm(total=100, desc=name, bar_format='{desc}: {percentage:3.0f}%|{bar} | {n_fmt}/{total_fmt}', position=pos) as progress_bar:
             temp = 0
             for i in per:
                 progress_bar.update(i - temp)
