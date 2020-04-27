@@ -16,6 +16,8 @@ import concurrent.futures
 
 from percent_complete import PercentComplete
 
+PROFILE = "informatica-phoenix"
+
 logging.basicConfig(filename='migrate.log',level=logging.INFO, format='%(levelname)s:%(name)s %(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 logger = logging.getLogger("test")
 REGIONS_SHORT_NAMES = {
@@ -205,7 +207,7 @@ if __name__ == "__main__":
         region_short_input = sys.argv[j]
         region_destination = REGIONS_SHORT_NAMES[region_short_input]
         regions.append(region_destination)
-    m = Migrate("informatica-phoenix", image_file, regions)
+    m = Migrate(PROFILE, image_file, regions)
     print("\n\n\n\n\n\n")
     print("Finished Migrating")
 

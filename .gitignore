@@ -1,8 +1,7 @@
-*.txt
 test.py
 *.pyc
 *.json
-t.py
+test*.py
 .vscode
 __pycache__
 *.log
