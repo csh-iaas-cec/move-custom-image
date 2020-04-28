@@ -215,7 +215,7 @@ class Migrate:
             for i in per:
                 progress_bar.update(i - temp)
                 temp = i
-                time.sleep(10)
+                time.sleep(30)
         return name
 
     def show_progress_and_import(self, percent, names, position):
