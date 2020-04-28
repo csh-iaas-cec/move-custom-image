@@ -14,7 +14,7 @@
 # Check the logs in migrate.log file
 # Wait for the progress bar to finish to 100%
 # Check whether the image has been imported in all regions once the code is executed
-
+import argparse
 import sys
 import logs
 import datetime
@@ -28,7 +28,7 @@ import concurrent.futures
 
 from percent_complete import PercentComplete
 
-PROFILE = "informatica-phoenix"
+# PROFILE = "informatica-phoenix"
 
 logger = logs.logger
 REGIONS_SHORT_NAMES = {
@@ -58,8 +58,11 @@ class Migrate:
     ACCESS_TYPE = "ObjectRead"
     COMPARTMENT = "ocid1.compartment.oc1..aaaaaaaaeyztjbsz5yaonksmqzsb7xy6sukjrxai452ciraf7bdhu7tcceqa"
 
-    def __init__(self, profile, image_file, regions):
+    def __init__(self, profile, image_file, regions, compartment_id=None, bucket_name=None):
         self.config = Config(profile)
+        self.compartment_id = compartment_id
+        self.bucket_name = bucket_name
+        self.initialize()
         self.source_config = self.config.get_config()
         self.source_region = self.source_config["region"]
         self.source_compute_client = oci.core.ComputeClient(self.source_config)
@@ -74,7 +77,22 @@ class Migrate:
         self.create_expiry_time()
         images = self.get_image_ocids(image_file)
         self.images_details = self.store_image_details_list(images)
+
         self.migrate_images()
+
+    def initialize(self):
+        self.update_compartment(self.compartment_id)
+        self.update_bucket_name(self.bucket_name)
+    
+    @classmethod
+    def update_compartment(cls, value):
+        if(value):
+            cls.COMPARTMENT = value
+
+    @classmethod
+    def update_bucket_name(cls, value):
+        if(value):
+            cls.BUCKET = value
 
     # Read the contents of the file and store in a variable and return it
 
@@ -197,6 +215,7 @@ class Migrate:
             for i in per:
                 progress_bar.update(i - temp)
                 temp = i
+                time.sleep(10)
         return name
 
     def show_progress_and_import(self, percent, names, position):
@@ -209,16 +228,37 @@ class Migrate:
             for f in concurrent.futures.as_completed(res):
                 object_name = f.result()
                 self.import_image_all_regions(object_name)
+                logger.info("Finished Migrating. "+object_name)
 
 
 if __name__ == "__main__":
-    image_file = sys.argv[1]
+    description = "\n".join(["Migrates the custom images to given destination regions","pip install -r requirements.txt","python migrate.py <images_list_file_name.txt> iad lhr bom phx"])
+    parser = argparse.ArgumentParser(description=description,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('--profile', help='Provide the profile to be used', required=True)
+    parser.add_argument('--file',
+                        help="Provide the text file which contains image ocids. ", required=True)
+    parser.add_argument('--regions', nargs='+',
+                        help="Updates the volume and backups tags from the given instance id", required=True)
+    parser.add_argument('--compartment_id', help='Provide the compartment ID where the images exist. (OPTIONAL) If not provided takes default compartment id')
+    parser.add_argument('--bucket_name', help="Provide bucket name for the images to be stored. OPTIONAL if not provided takes default bucket")
+    
+    
+    args = parser.parse_args()
+    PROFILE = args.profile
+    compartment_id = None
+    bucket_name = None
+    if(args.compartment_id):
+        compartment_id = args.compartment_id
+    if(args.bucket_name):
+        bucket_name = args.bucket_name
+    image_file = args.file
     regions = list()
-    for j in range(2, len(sys.argv)):
-        region_short_input = sys.argv[j]
-        region_destination = REGIONS_SHORT_NAMES[region_short_input]
+    regions_list = args.regions
+    for j in regions_list:
+        region_destination = REGIONS_SHORT_NAMES[j]
         regions.append(region_destination)
-    m = Migrate(PROFILE, image_file, regions)
+    m = Migrate(PROFILE, image_file, regions, compartment_id, bucket_name)
     print("\n\n\n\n\n\n")
-    print("Finished Migrating")
+    print("Finished Migrating. Please check the logs if it was successful")
 

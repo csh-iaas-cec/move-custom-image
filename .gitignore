@@ -5,3 +5,4 @@ test*.py
 .vscode
 __pycache__
 *.log
+images.txt
