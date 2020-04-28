@@ -1,6 +1,8 @@
 from worker_iterator import Worker
 import time
+import logs
 
+logger = logs.logger
 
 class PercentComplete:
     def __init__(self, config, image_id, compartment, size_in_mbs=0):
@@ -18,7 +20,8 @@ class PercentComplete:
         if self.res < self.percent:
             try:
                 self.res = self.worker.get_percent_complete_from_image_id(self.image_id)
-            except Exception:
+            except Exception as e:
+                logger.warning(e)
                 self.res = self.percent
 
             return int(self.res)

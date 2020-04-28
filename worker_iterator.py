@@ -1,6 +1,8 @@
 from config import Config
 import oci
+import logs
 
+logger = logs.logger
 
 class Worker:
     def __init__(self, config, compartment):
@@ -26,7 +28,8 @@ class Worker:
     def get_percent_complete(self, work_request_id):
         try:
             return self.get_worker_state(work_request_id).percent_complete
-        except Exception:
+        except Exception as e:
+            logger.warning(e)
             raise Exception
 
     def get_percent_complete_from_image_id(self, image_id):
@@ -43,5 +46,6 @@ class Worker:
     def get_worker_state(self, worker_id):
         try:
             return self.work_request_client.get_work_request(worker_id).data
-        except Exception:
+        except Exception as e:
+            logger.warning(e)
             raise

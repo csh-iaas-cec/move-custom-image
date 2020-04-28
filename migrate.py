@@ -16,7 +16,7 @@
 # Check whether the image has been imported in all regions once the code is executed
 
 import sys
-import logging
+import logs
 import datetime
 from datetime import timedelta
 import time
@@ -30,8 +30,7 @@ from percent_complete import PercentComplete
 
 PROFILE = "informatica-phoenix"
 
-logging.basicConfig(filename='migrate.log',level=logging.INFO, format='%(levelname)s:%(name)s %(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-logger = logging.getLogger("test")
+logger = logs.logger
 REGIONS_SHORT_NAMES = {
     "phx": "us-phoenix-1",
     "iad": "us-ashburn-1",
