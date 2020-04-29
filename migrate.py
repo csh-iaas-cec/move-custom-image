@@ -135,7 +135,7 @@ class Migrate:
 		)
 		logger.info(f"Started to export image {image.display_name}")
 		try:
-			self.source_composite_compute_client.export_image_and_wait_for_state(image.id, export_image_details,  wait_for_states=["STATUS_SUCCEEDED"])
+			self.source_composite_compute_client.export_image_and_wait_for_state(image.id, export_image_details,  wait_for_states=["STATUS_SUCCEEDED"], waiter_kwargs={"max_wait_seconds": 3600, "max_interval_seconds": 45})
 			name = image.display_name
 			logger.info(f"Exported {image.display_name}")
 		except oci.exceptions.CompositeOperationError as e:
