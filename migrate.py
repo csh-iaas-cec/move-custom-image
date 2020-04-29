@@ -134,19 +134,16 @@ class Migrate:
 			object_name=image.display_name,
 		)
 		logger.info(f"Started to export image {image.display_name}")
-		self.source_composite_compute_client.export_image_and_wait_for_state(image.id, export_image_details,  wait_for_states=["SUCCEEDED"], waiter_kwargs={"max_wait_seconds": 7200, "max_interval_seconds": 45})
-		name = image.display_name
-		logger.info(f"Exported {image.display_name}")
-		# try:
-		# 	self.source_composite_compute_client.export_image_and_wait_for_state(image.id, export_image_details,  wait_for_states=["STATUS_SUCCEEDED"], waiter_kwargs={"max_wait_seconds": 7200, "max_interval_seconds": 45})
-		# 	name = image.display_name
-		# 	logger.info(f"Exported {image.display_name}")
-		# except oci.exceptions.CompositeOperationError as e:
-		# 	logger.error(type(e))
-		# 	logger.error(e.partial_results)
-		# 	logger.error(e.cause)
-		# 	logger.error(f"Error exporting the image {image.display_name}")
-		# 	name = None
+		try:
+			self.source_composite_compute_client.export_image_and_wait_for_state(image.id, export_image_details,  wait_for_states=["AVAILABLE"], waiter_kwargs={"max_wait_seconds": 7200, "max_interval_seconds": 45})
+			name = image.display_name
+			logger.info(f"Exported {image.display_name}")
+		except oci.exceptions.CompositeOperationError as e:
+			logger.error(type(e))
+			logger.error(e.partial_results)
+			logger.error(e.cause)
+			logger.error(f"Error exporting the image {image.display_name}")
+			name = None
 		
 			
 		return name
