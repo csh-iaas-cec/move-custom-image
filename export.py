@@ -100,7 +100,8 @@ class Migrate:
 				images_details.append(detail)
 				logger.info(f"Initializing to start exporting image {detail.display_name}")
 			except Exception as e:
-				logger.error(f"Skipping that Image as it doesn't exist {i}")
+				logger.error(f"Skipping {i} Image as it doesn't exist. \
+					Please check the OCID of the image whether it exists in the specified compartment ")
 			
 			
 		return images_details
@@ -116,6 +117,7 @@ class Migrate:
 				object_name = f.result()
 				try:
 					self.import_image_all_regions(object_name)
+					logger.info(f"{object_name} successfuly started importing in regions")
 				except Exception as e:
 					logger.error(f"Importing of image {object_name} cancelled")
 					logger.error(e)
@@ -131,6 +133,7 @@ class Migrate:
 		try:
 			self.source_composite_compute_client.export_image_and_wait_for_state(image.id, export_image_details,  wait_for_states=["STATUS_SUCCEEDED"])
 			name = image.display_name
+			logger.info(f"Exported Image {image.display_name}")
 		except Exception as e:
 			logger.error(e)
 			logger.error(f"Skipping this image export {image.display_name}")
@@ -188,6 +191,7 @@ class Migrate:
 		destination_compute_clients = self.list_destination_compute_clients(self.regions)
 		try:
 			par = self.create_PAR(object_name)
+			logger.info(f"Creation of PAR is successful for image {object_name}")
 		except Exception as e:
 			logger.error(e)
 			logger.error(f"Can't create PAR terminating the process of exporting the image {object_name}")
@@ -207,6 +211,7 @@ class Migrate:
 			display_name=object_name,
 		)
 		image_details = cid.create_image(create_image_details=image_details)
+		logger.info(f"Importing image {object_name} started successfully ")
 
 
 if __name__ == "__main__":
