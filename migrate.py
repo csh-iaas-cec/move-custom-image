@@ -138,9 +138,10 @@ class Migrate:
 			self.source_composite_compute_client.export_image_and_wait_for_state(image.id, export_image_details,  wait_for_states=["STATUS_SUCCEEDED"])
 			name = image.display_name
 			logger.info(f"Exported {image.display_name}")
-		except Exception as e:
+		except oci.exceptions.CompositeOperationError as e:
 			logger.error(type(e))
-			logger.error(e)
+			logger.error(e.partial_results)
+			logger.error(e.cause)
 			logger.error(f"Error exporting the image {image.display_name}")
 			name = None
 		
