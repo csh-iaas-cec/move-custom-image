@@ -47,6 +47,5 @@ class Worker:
     def get_worker_state(self, worker_id):
         try:
             return self.work_request_client.get_work_request(worker_id).data
-        except Exception as e:
+        except oci.exceptions.ConnectTimeout as e:
             logger.warning(e)
-            raise

@@ -22,7 +22,7 @@ class PercentComplete:
                 self.res = self.worker.get_percent_complete_from_image_id(self.image_id)
             except Exception as e:
                 logger.warning(e)
-                self.res = self.percent
+                raise StopIteration
 
             return int(self.res)
         else:
