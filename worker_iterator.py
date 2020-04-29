@@ -4,13 +4,14 @@ import logs
 
 logger = logs.logger
 
+
 class Worker:
     def __init__(self, config, compartment):
         Worker.compartment = compartment
         self.percent = 100
         self.source_config = config
         self.work_request_client = oci.work_requests.WorkRequestClient(
-            self.source_config
+            config=self.source_config, retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY
         )
         self.image_worker = dict()
 
