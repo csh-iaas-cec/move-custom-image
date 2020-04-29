@@ -1,13 +1,14 @@
 import sys
 import datetime
 from datetime import timedelta
-
+import logs
 from config import Config
 from oci.config import validate_config
 import oci
 import concurrent.futures
 
 
+logger = logs.logger
 REGIONS_SHORT_NAMES = {
 	"phx": "us-phoenix-1",
 	"iad": "us-ashburn-1",
@@ -32,12 +33,14 @@ REGIONS_SHORT_NAMES = {
 class Migrate:
 
 	BUCKET = "CustomImages"
-	POOL_SIZE = 5
 	ACCESS_TYPE = "ObjectRead"
 	COMPARTMENT = "ocid1.compartment.oc1..aaaaaaaaeyztjbsz5yaonksmqzsb7xy6sukjrxai452ciraf7bdhu7tcceqa"
 	
-	def __init__(self, profile, image_file, regions):
+	def __init__(self, profile, image_file, regions, compartment_id=None, bucket_name=None):
 		self.config = Config(profile)
+		self.compartment_id = compartment_id
+		self.bucket_name = bucket_name
+		self.initialize()
 		self.source_config = self.config.get_config()
 		self.source_region = self.source_config["region"]
 		self.source_compute_client = oci.core.ComputeClient(self.source_config)
@@ -64,15 +67,42 @@ class Migrate:
 			images.append(i.strip())
 		return images
 
+	def initialize(self):
+		self.update_compartment(self.compartment_id)
+		self.update_bucket_name(self.bucket_name)
+		logger.info("Script started executing")
+	
+	@classmethod
+	def update_compartment(cls, value):
+		if(value):
+			cls.COMPARTMENT = value
+
+	@classmethod
+	def update_bucket_name(cls, value):
+		if(value):
+			cls.BUCKET = value
+
 	# Request to return image details
 	def get_images_details(self, image_id):
-		return self.source_compute_client.get_image(image_id=image_id).data
+		try:
+			return self.source_compute_client.get_image(image_id=image_id).data
+		except Exception as e:
+			logger.error(f"{image_id} doesn't exist")
+			logger.error(e)
+			raise
 
 	# Store all image details
 	def store_image_details_list(self, images_list):
 		images_details = list()
 		for i in images_list:
-			images_details.append(self.get_images_details(i))
+			try:
+				detail = self.get_images_details(i)
+				images_details.append(detail)
+				logger.info(f"Initializing to start exporting image {detail.display_name}")
+			except Exception as e:
+				logger.error(f"Skipping that Image as it doesn't exist {i}")
+			
+			
 		return images_details
 
 	def migrate_images(self):
@@ -84,11 +114,13 @@ class Migrate:
 
 			for f in concurrent.futures.as_completed(results):
 				object_name = f.result()
-				self.import_image_all_regions(object_name)
+				try:
+					self.import_image_all_regions(object_name)
+				except Exception as e:
+					logger.error(f"Importing of image {object_name} cancelled")
+					logger.error(e)
 
-			# with concurrent.futures.ThreadPoolExecutor() as executor_2:
-			# 	res = [executor_2.submit(self.import_image, f.result()) for f in concurrent.futures.as_completed(results)]
-
+			
 	def export_image(self, image):
 		export_image_details = oci.core.models.ExportImageViaObjectStorageTupleDetails(
 			bucket_name=Migrate.BUCKET,
@@ -96,8 +128,15 @@ class Migrate:
 			namespace_name=self.namespace,
 			object_name=image.display_name,
 		)
-		self.source_composite_compute_client.export_image_and_wait_for_state(image.id, export_image_details,  wait_for_states=["STATUS_SUCCEEDED"])
-		return image.display_name
+		try:
+			self.source_composite_compute_client.export_image_and_wait_for_state(image.id, export_image_details,  wait_for_states=["STATUS_SUCCEEDED"])
+			name = image.display_name
+		except Exception as e:
+			logger.error(e)
+			logger.error(f"Skipping this image export {image.display_name}")
+			name = None
+			
+		return name
 
 	def create_expiry_time(self):
 		day_late = datetime.datetime.now() + timedelta(days=7)
@@ -106,17 +145,25 @@ class Migrate:
 	def create_PAR(self, object_name):
 		par_name = object_name + "_par"
 		print("Creating par " + par_name)
-		par_details = oci.object_storage.models.CreatePreauthenticatedRequestDetails(
-			access_type=Migrate.ACCESS_TYPE,
-			name=par_name,
-			object_name=object_name,
-			time_expires=self.expiry_time,
-		)
-		par_request = self.object_storage_client.create_preauthenticated_request(
-			namespace_name=self.namespace,
-			bucket_name=Migrate.BUCKET,
-			create_preauthenticated_request_details=par_details,
-		).data
+		try:
+			par_details = oci.object_storage.models.CreatePreauthenticatedRequestDetails(
+				access_type=Migrate.ACCESS_TYPE,
+				name=par_name,
+				object_name=object_name,
+				time_expires=self.expiry_time,
+			)
+		except Exception as e:
+			logger.error(e)
+			raise
+		try:
+			par_request = self.object_storage_client.create_preauthenticated_request(
+				namespace_name=self.namespace,
+				bucket_name=Migrate.BUCKET,
+				create_preauthenticated_request_details=par_details,
+			).data
+		except Exception as e:
+			logger.error(e)
+			raise
 		par = (
 			"https://objectstorage."
 			+ self.source_region
@@ -139,7 +186,13 @@ class Migrate:
 
 	def import_image_all_regions(self, object_name):
 		destination_compute_clients = self.list_destination_compute_clients(self.regions)
-		par = self.create_PAR(object_name)
+		try:
+			par = self.create_PAR(object_name)
+		except Exception as e:
+			logger.error(e)
+			logger.error(f"Can't create PAR terminating the process of exporting the image {object_name}")
+			raise
+		
 		for cid in destination_compute_clients:
 			self.import_image(par, object_name, cid)
 
@@ -157,10 +210,30 @@ class Migrate:
 
 
 if __name__ == "__main__":
-	image_file = sys.argv[1]
+	description = "\n".join(["Migrates the custom images to given destination regions","pip install -r requirements.txt","python migrate.py <images_list_file_name.txt> iad lhr bom phx"])
+    parser = argparse.ArgumentParser(description=description,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('--profile', help='Provide the profile to be used', required=True)
+    parser.add_argument('--file',
+                        help="Provide the text file which contains image ocids. ", required=True)
+    parser.add_argument('--regions', nargs='+',
+                        help="Updates the volume and backups tags from the given instance id", required=True)
+    parser.add_argument('--compartment_id', help='Provide the compartment ID where the images exist. (OPTIONAL) If not provided takes default compartment id')
+    parser.add_argument('--bucket_name', help="Provide bucket name for the images to be stored. OPTIONAL if not provided takes default bucket")
+    
+    
+    args = parser.parse_args()
+    PROFILE = args.profile
+    compartment_id = None
+    bucket_name = None
+    if(args.compartment_id):
+        compartment_id = args.compartment_id
+    if(args.bucket_name):
+        bucket_name = args.bucket_name
+    image_file = args.file
+    regions_list = args.regions
 	regions = list()
-	for j in range(2, len(sys.argv)):
-		region_short_input = sys.argv[j]
-		region_destination = REGIONS_SHORT_NAMES[region_short_input]
-		regions.append(region_destination)
-	m = Migrate("informatica-phoenix", image_file, regions)
+	for j in regions_list:
+        region_destination = REGIONS_SHORT_NAMES[j]
+        regions.append(region_destination)
+	m = Migrate(PROFILE, image_file, regions, compartment_id, bucket_name)
