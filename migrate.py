@@ -130,8 +130,8 @@ class Migrate:
                 names.append(image.display_name)
                 pos.append(count)
             except Exception as e:
-                logger.warning("Error in the image " + image_detail.display_name)
-                logger.warning(e)
+                logger.error("Error in the image " + image_detail.display_name)
+                logger.error(e)
 
         time.sleep(15)
         self.show_progress_and_import(percents, names, pos)
@@ -147,7 +147,7 @@ class Migrate:
             self.source_compute_client.export_image(image.id, export_image_details)
             logger.info(image.display_name+" started exporting")
         except oci.exceptions.ServiceError as e:
-            logger.warning(e.code)
+            logger.error(e.code)
             raise
 
         return image
