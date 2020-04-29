@@ -33,7 +33,7 @@ REGIONS_SHORT_NAMES = {
 
 class Migrate:
 
-	BUCKET = "CustomImages"
+	BUCKET = "STOREIMAGES"
 	ACCESS_TYPE = "ObjectRead"
 	COMPARTMENT = "ocid1.compartment.oc1..aaaaaaaaeyztjbsz5yaonksmqzsb7xy6sukjrxai452ciraf7bdhu7tcceqa"
 	
@@ -134,7 +134,7 @@ class Migrate:
 			object_name=image.display_name,
 		)
 		logger.info(f"Started to export image {image.display_name}")
-		self.source_composite_compute_client.export_image_and_wait_for_state(image.id, export_image_details,  wait_for_states=["STATUS_SUCCEEDED"], waiter_kwargs={"max_wait_seconds": 7200, "max_interval_seconds": 45})
+		self.source_composite_compute_client.export_image_and_wait_for_state(image.id, export_image_details,  wait_for_states=["SUCCEEDED"], waiter_kwargs={"max_wait_seconds": 7200, "max_interval_seconds": 45})
 		name = image.display_name
 		logger.info(f"Exported {image.display_name}")
 		# try:
