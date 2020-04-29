@@ -7,6 +7,7 @@ from oci.config import validate_config
 import oci
 import concurrent.futures
 import argparse
+import time
 
 logger = logs.logger
 REGIONS_SHORT_NAMES = {
@@ -95,11 +96,13 @@ class Migrate:
 	def store_image_details_list(self, images_list):
 		images_details = list()
 		for i in images_list:
+			time.sleep(1)
 			try:
 				detail = self.get_images_details(i)
 				images_details.append(detail)
 				logger.info(f"Initializing to start exporting image {detail.display_name}")
 			except Exception as e:
+				logger.error(e)
 				logger.error(f"Skipping {i} Image as it doesn't exist. \
 					Please check the OCID of the image whether it exists in the specified compartment ")
 			
@@ -130,14 +133,17 @@ class Migrate:
 			namespace_name=self.namespace,
 			object_name=image.display_name,
 		)
+		logger.info(f"Started to export image {image.display_name}")
 		try:
 			self.source_composite_compute_client.export_image_and_wait_for_state(image.id, export_image_details,  wait_for_states=["STATUS_SUCCEEDED"])
 			name = image.display_name
-			logger.info(f"Exported Image {image.display_name}")
+			logger.info(f"Exported {image.display_name}")
 		except Exception as e:
+			logger.error(type(e))
 			logger.error(e)
-			logger.error(f"Skipping this image export {image.display_name}")
+			logger.error(f"Error exporting the image {image.display_name}")
 			name = None
+		
 			
 		return name
 
