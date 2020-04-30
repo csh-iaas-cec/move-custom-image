@@ -54,7 +54,7 @@ REGIONS_SHORT_NAMES = {
 
 class Migrate:
 
-    BUCKET = "CustomImages"
+    BUCKET = "STOREIMAGES"
     ACCESS_TYPE = "ObjectRead"
     COMPARTMENT = "ocid1.compartment.oc1..aaaaaaaaeyztjbsz5yaonksmqzsb7xy6sukjrxai452ciraf7bdhu7tcceqa"
 
@@ -130,6 +130,7 @@ class Migrate:
                 names.append(image.display_name)
                 pos.append(count)
             except Exception as e:
+                print("Error in the image " + image_detail.display_name)
                 logger.error("Error in the image " + image_detail.display_name)
                 logger.error(e)
 
@@ -145,6 +146,7 @@ class Migrate:
         )
         try:
             self.source_compute_client.export_image(image.id, export_image_details)
+            print(image.display_name+" started exporting")
             logger.info(image.display_name+" started exporting")
         except oci.exceptions.ServiceError as e:
             logger.error(e.code)
@@ -158,6 +160,7 @@ class Migrate:
 
     def create_PAR(self, object_name):
         par_name = object_name + "_par"
+        print("Creating par " + par_name)
         logger.info("Creating par " + par_name)
         par_details = oci.object_storage.models.CreatePreauthenticatedRequestDetails(
             access_type=Migrate.ACCESS_TYPE,
@@ -194,6 +197,7 @@ class Migrate:
             self.regions
         )
         par = self.create_PAR(object_name)
+        print("Importing Image " + object_name)
         logger.info("Importing Image " + object_name)
         for cid in destination_compute_clients:
             self.import_image(par, object_name, cid)
@@ -228,6 +232,7 @@ class Migrate:
             for f in concurrent.futures.as_completed(res):
                 object_name = f.result()
                 self.import_image_all_regions(object_name)
+                print("Finished Migrating. "+object_name)
                 logger.info("Finished Migrating. "+object_name)
 
 
