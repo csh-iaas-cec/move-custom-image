@@ -71,6 +71,7 @@ class Migrate:
 	def initialize(self):
 		self.update_compartment(self.compartment_id)
 		self.update_bucket_name(self.bucket_name)
+		print("Script started executing")
 		logger.info("Script started executing")
 	
 	@classmethod
@@ -88,6 +89,7 @@ class Migrate:
 		try:
 			return self.source_compute_client.get_image(image_id=image_id).data
 		except Exception as e:
+			print(f"{image_id} doesn't exist")
 			logger.error(f"{image_id} doesn't exist")
 			logger.error(e)
 			raise
@@ -100,8 +102,10 @@ class Migrate:
 			try:
 				detail = self.get_images_details(i)
 				images_details.append(detail)
+				print(f"Initializing to start exporting image {detail.display_name}")
 				logger.info(f"Initializing to start exporting image {detail.display_name}")
 			except Exception as e:
+				print(e)
 				logger.error(e)
 				logger.error(f"Skipping {i} Image as it doesn't exist. \
 					Please check the OCID of the image whether it exists in the specified compartment ")
@@ -120,6 +124,7 @@ class Migrate:
 				object_name = f.result()
 				try:
 					self.import_image_all_regions(object_name)
+					print(f"{object_name} successfuly started importing in regions")
 					logger.info(f"{object_name} successfuly started importing in regions")
 				except Exception as e:
 					logger.error(f"Importing of image {object_name} cancelled")
@@ -133,15 +138,18 @@ class Migrate:
 			namespace_name=self.namespace,
 			object_name=image.display_name,
 		)
+		print(f"Started to export image {image.display_name}")
 		logger.info(f"Started to export image {image.display_name}")
 		try:
 			self.source_composite_compute_client.export_image_and_wait_for_state(image.id, export_image_details,  wait_for_states=["AVAILABLE"], waiter_kwargs={"max_wait_seconds": 7200, "max_interval_seconds": 45})
 			name = image.display_name
+			print(f"Exported {image.display_name}")
 			logger.info(f"Exported {image.display_name}")
 		except oci.exceptions.CompositeOperationError as e:
 			logger.error(type(e))
 			logger.error(e.partial_results)
 			logger.error(e.cause)
+			print(f"Error exporting the image {image.display_name}")
 			logger.error(f"Error exporting the image {image.display_name}")
 			name = None
 		
@@ -163,6 +171,7 @@ class Migrate:
 				time_expires=self.expiry_time,
 			)
 		except Exception as e:
+			print(e)
 			logger.error(e)
 			raise
 		try:
@@ -172,6 +181,7 @@ class Migrate:
 				create_preauthenticated_request_details=par_details,
 			).data
 		except Exception as e:
+			print.error(e)
 			logger.error(e)
 			raise
 		par = (
@@ -198,6 +208,7 @@ class Migrate:
 		destination_compute_clients = self.list_destination_compute_clients(self.regions)
 		try:
 			par = self.create_PAR(object_name)
+			print(f"Creation of PAR is successful for image {object_name}")
 			logger.info(f"Creation of PAR is successful for image {object_name}")
 		except Exception as e:
 			logger.error(e)
@@ -218,6 +229,7 @@ class Migrate:
 			display_name=object_name,
 		)
 		image_details = cid.create_image(create_image_details=image_details)
+		print(f"Importing image {object_name} started successfully ")
 		logger.info(f"Importing image {object_name} started successfully ")
 
 
@@ -249,3 +261,5 @@ if __name__ == "__main__":
 		region_destination = REGIONS_SHORT_NAMES[j]
 		regions.append(region_destination)
 	m = Migrate(PROFILE, image_file, regions, compartment_id, bucket_name)
+
+    print("Completed")
