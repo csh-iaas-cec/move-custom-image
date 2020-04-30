@@ -261,5 +261,4 @@ if __name__ == "__main__":
 		region_destination = REGIONS_SHORT_NAMES[j]
 		regions.append(region_destination)
 	m = Migrate(PROFILE, image_file, regions, compartment_id, bucket_name)
-
-    print("Completed")
+	print("Completed")
