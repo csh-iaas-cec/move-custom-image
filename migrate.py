@@ -124,7 +124,6 @@ class Migrate:
 				object_name = f.result()
 				try:
 					self.import_image_all_regions(object_name)
-					print(f"{object_name} successfuly started importing in regions")
 					logger.info(f"{object_name} successfuly started importing in regions")
 				except Exception as e:
 					logger.error(f"Importing of image {object_name} cancelled")
@@ -181,7 +180,7 @@ class Migrate:
 				create_preauthenticated_request_details=par_details,
 			).data
 		except Exception as e:
-			print.error(e)
+			print(e)
 			logger.error(e)
 			raise
 		par = (
@@ -215,11 +214,11 @@ class Migrate:
 			logger.error(f"Can't create PAR terminating the process of exporting the image {object_name}")
 			raise
 		
-		for cid in destination_compute_clients:
-			self.import_image(par, object_name, cid)
+		for cid,region in zip(destination_compute_clients,self.regions):
+			self.import_image(par, object_name, cid, region)
 
-	def import_image(self, par, object_name, cid):
-		print("Importing Image " + object_name)
+	def import_image(self, par, object_name, cid, region):
+		print(f"Importing Image {object_name} in {region} region.")
 		source_details = oci.core.models.ImageSourceViaObjectStorageUriDetails(
 			source_type="objectStorageUri", source_uri=par
 		)
