@@ -227,7 +227,9 @@ class Migrate:
 			image_source_details=source_details,
 			display_name=object_name,
 		)
-		image_details = cid.create_image(create_image_details=image_details)
+		image_details = cid.create_image(create_image_details=image_details).data
+		with open("images_details.txt","w") as f:
+			f.write(image_details.id+","+region+"\n")
 		print(f"Importing image {object_name} started successfully ")
 		logger.info(f"Importing image {object_name} started successfully ")
 
