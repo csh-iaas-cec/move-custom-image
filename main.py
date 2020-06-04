@@ -24,6 +24,10 @@ def validate(profile):
                     image_detail = cid.get_image(image_id).data
                     if(image_detail.lifecycle_state == "DELETED" or image_detail.lifecycle_state == "UNKNOWN_ENUM_VALUE"):
                         print(f"Import of image {image_detail.display_name} is deleted or unknown")
+                    elif(image_detail.lifecycle_state == "AVAILABLE"):
+                        print(f"Successful import of image {image_detail.display_name}, import COMPLETED")
+                    elif(image_detail.lifecycle_state == "IMPORTING"):
+                        print(f"Please wait and try again, importing of image {image_detail.display_name}")
                 except Exception as e:
                     logger.error(e)
                     print(f"Image does't exist or we dont have a trace of existence. Please retry copying of image {image_detail.display_name}")
