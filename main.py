@@ -1,6 +1,7 @@
 from config import Config
 import oci
 import logs
+import argparse
 
 logger = logs.logger
 
@@ -21,7 +22,7 @@ def validate(profile):
                     region = detail[1]
                     cid = get_destination_compute_client(profile, region)
                     image_detail = cid.get_image(image_id).data
-                    if(image_detail.lifecycle_state == "DELETED" || image_detail.lifecycle_state == "UNKNOWN_ENUM_VALUE"):
+                    if(image_detail.lifecycle_state == "DELETED" or image_detail.lifecycle_state == "UNKNOWN_ENUM_VALUE"):
                         print(f"Import of image {image_detail.display_name} is deleted or unknown")
                 except Exception as e:
                     logger.error(e)
@@ -31,12 +32,8 @@ def validate(profile):
         print("image_details.txt doesnt exist")
 
 if __name__ == "__main__":
-    description = "\n".join(["Migrates the custom images to given destination regions","pip install -r requirements.txt","python migrate.py <images_list_file_name.txt> iad lhr bom phx"])
-	parser = argparse.ArgumentParser(description=description,
-									 formatter_class=argparse.RawDescriptionHelpFormatter)
-	parser.add_argument('--profile', help='Provide the profile to be used', required=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--profile', help='Provide the profile to be used', required=True)
     args = parser.parse_args()
-	PROFILE = args.profile
-	if(args.bucket_name):
-		bucket_name = args.bucket_name
+    PROFILE = args.profile
     validate(PROFILE)
