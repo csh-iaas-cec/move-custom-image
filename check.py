@@ -23,14 +23,14 @@ def validate(profile):
                     cid = get_destination_compute_client(profile, region)
                     image_detail = cid.get_image(image_id).data
                     if(image_detail.lifecycle_state == "DELETED" or image_detail.lifecycle_state == "UNKNOWN_ENUM_VALUE"):
-                        print(f"Import of image {image_detail.display_name} is deleted or unknown")
+                        print(f"Import of image {image_detail.display_name} is deleted or unknown in {region}")
                     elif(image_detail.lifecycle_state == "AVAILABLE"):
-                        print(f"Successful import of image {image_detail.display_name}, import COMPLETED")
+                        print(f"Successful import of image {image_detail.display_name}, import COMPLETED in {region}")
                     elif(image_detail.lifecycle_state == "IMPORTING"):
-                        print(f"Please wait and try again, importing of image {image_detail.display_name}")
+                        print(f"Please wait and try again, importing of image {image_detail.display_name} in {region}")
                 except Exception as e:
                     logger.error(e)
-                    print(f"Image does't exist or we dont have a trace of existence. Please retry copying of image {image_detail.display_name}")
+                    print(f"Image does't exist or we dont have a trace of existence. Please retry copying of image {image_detail.display_name} in {region}")
     except Exception:
         logger.error(f"image_details.txt doesnt exist")
         print("image_details.txt doesnt exist")
