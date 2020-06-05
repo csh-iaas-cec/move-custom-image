@@ -54,7 +54,7 @@ class Migrate:
 		self.create_expiry_time()
 		images = self.get_image_ocids(image_file)
 		self.images_details = self.store_image_details_list(images)
-		self.migrate_images()
+		# self.migrate_images()
 		
 
 	# Read the contents of the file and store in a variable and return it
@@ -128,6 +128,17 @@ class Migrate:
 				except Exception as e:
 					logger.error(f"Importing of image {object_name} cancelled")
 					logger.error(e)
+
+	def move_images(self):
+		
+		for image_detail in self.images_details:
+			object_name = image_detail.display_name
+			try:
+				self.import_image_all_regions(object_name)
+				logger.info(f"{object_name} successfuly started importing in regions")
+			except Exception as e:
+				logger.error(f"Importing of image {object_name} cancelled")
+				logger.error(e)
 
 			
 	def export_image(self, image):
@@ -245,6 +256,7 @@ if __name__ == "__main__":
 						help="Updates the volume and backups tags from the given instance id", required=True)
 	parser.add_argument('--compartment_id', help='Provide the compartment ID where the images exist. (OPTIONAL) If not provided takes default compartment id')
 	parser.add_argument('--bucket_name', help="Provide bucket name for the images to be stored. OPTIONAL if not provided takes default bucket")
+	parser.add_argument('--import_image', help="Only import images which are failed previously")
 	
 	
 	args = parser.parse_args()
@@ -262,4 +274,5 @@ if __name__ == "__main__":
 		region_destination = REGIONS_SHORT_NAMES[j]
 		regions.append(region_destination)
 	m = Migrate(PROFILE, image_file, regions, compartment_id, bucket_name)
+	m.migrate_images()
 	print("Completed")
