@@ -256,7 +256,7 @@ if __name__ == "__main__":
 						help="Updates the volume and backups tags from the given instance id", required=True)
 	parser.add_argument('--compartment_id', help='Provide the compartment ID where the images exist. (OPTIONAL) If not provided takes default compartment id')
 	parser.add_argument('--bucket_name', help="Provide bucket name for the images to be stored. OPTIONAL if not provided takes default bucket")
-	parser.add_argument('--import_image', help="Only import images which are failed previously")
+	parser.add_argument('--import_image', help="Only import images which are failed previously", action="store_true")
 	
 	
 	args = parser.parse_args()
@@ -274,5 +274,8 @@ if __name__ == "__main__":
 		region_destination = REGIONS_SHORT_NAMES[j]
 		regions.append(region_destination)
 	m = Migrate(PROFILE, image_file, regions, compartment_id, bucket_name)
-	m.migrate_images()
+	if(args.import_image):
+		m.move_image()
+	else:
+		m.migrate_images()
 	print("Completed")
