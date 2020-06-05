@@ -2,6 +2,28 @@ from migrate import Migrate
 import argparse
 
 
+REGIONS_SHORT_NAMES = {
+	"phx": "us-phoenix-1",
+	"iad": "us-ashburn-1",
+	"fra": "eu-frankfurt-1",
+	"zrh": "eu-zurich-1",
+	"lhr": "uk-london-1",
+	"yyz": "ca-toronto-1",
+	"nrt": "ap-tokyo-1",
+	"icn": "ap-seoul-1",
+	"bom": "ap-mumbai-1",
+	"gru": "sa-saopaulo-1",
+	"syd": "ap-sydney-1",
+	"ltn": "uk-gov-london-1",
+	"kix": "ap-osaka-1",
+	"mel": "ap-melbourne-1",
+	"ams": "eu-amsterdam-1",
+	"jed": "me-jeddah-1",
+	"yul": "ca-montreal-1",
+}
+
+
+
 
 
 
